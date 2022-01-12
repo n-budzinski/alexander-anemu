@@ -61,7 +61,7 @@ class Player(threading.Thread):
             leave_lobby_process(self)
             connections.remove(self)
 
-        except OSError.errno == errno.ENOTCONN:
+        except OSError == errno.ENOTCONN:
             logging.debug("Tried shutting down disconnected endpoint")
 
     def run(self):
@@ -72,7 +72,6 @@ class Player(threading.Thread):
         while True:
 
             try:
-                print(len(connections))
                 data = self.sock.recv(512)
 
             except socket.timeout:
@@ -149,7 +148,6 @@ def reverseip(address: str):
     
 
 def leave_lobby_process(client: Player):
-    print("leave lobby called")
     try:
         if client.lobby_id in lobbies:
             del lobbies[client.lobby_id]
@@ -164,7 +162,6 @@ def leave_lobby_process(client: Player):
 
 
 def terminate_incorrect_lobbies():
-    print(len(connections))
     for lobby in lobbies:
         if lobbies[lobby].host not in connections:
             logging.warning("A lobby is missing its host. Removing...")
@@ -223,8 +220,6 @@ def packet_pack(packet, request):
     finalizedpacket.extend(struct.pack("I", datalen))  # unpacked data length
     finalizedpacket.extend(packeddata)
     return finalizedpacket
-
-
 
 def new_game_create(host: Player, options):
     max_players = None
@@ -324,10 +319,7 @@ def join_game(client, options):
 
 
 def get_dbtbl(options: list):
-    #print(len(main.lobbies))
-    #print(len(main.connections))
     """Handles dbtbl (available lobby table) calls."""
-    #main.terminate_incorrect_lobbies()
     order = None
     resort = None
     for option in options:
@@ -412,8 +404,6 @@ def log_user(client, options):
         response_data = response_data.replace("PLAYERID", str(client.session_id))
         response_data = response_data.replace("CHAT_ADDRESS", IRC_CHAT_ADDRESS)
         return response_data
-
-
 
 
 def processrequest(raw_data, client: Player):
