@@ -135,7 +135,7 @@ def leave_lobby_process(client: Player):
 
 def terminate_incorrect_lobbies():
     for lobby in lobbies:
-        if not lobbies[lobby].host:
+        if not lobbies[lobby].host.session_id in connections:
             logging.warning("A lobby is missing its host. Removing...")
             lobby.remove()
 
