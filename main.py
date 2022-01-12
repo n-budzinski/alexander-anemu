@@ -61,8 +61,9 @@ class Player(threading.Thread):
             leave_lobby_process(self)
             connections.remove(self)
 
-        except OSError == errno.ENOTCONN:
-            logging.debug("Tried shutting down disconnected endpoint")
+        except:
+            pass
+
 
     def run(self):
 
@@ -75,17 +76,18 @@ class Player(threading.Thread):
                 data = self.sock.recv(512)
 
             except socket.timeout:
-                logging.info(f"{str(self.ip_address)} timed out")
+                logging.info(f"{str(self.ip_address)} has disconnected - Connection timed out")
+                self.remove()
+                break
+
+            except ConnectionResetError:
+                logging.info(f"{str(self.ip_address)} has disconnected - Connection reset by peer")
                 self.remove()
                 break
 
             except ConnectionError:
-                logging.info(f"{str(self.ip_address)} has disconnected due to a connection error")
-                self.remove()
+                logging.info(f"{str(self.ip_address)} has disconnected - Connection error")
                 break
-
-            except OSError:
-                pass
 
             except:
                 logging.info(f"{str(self.ip_address)} has disconnected")
@@ -116,6 +118,8 @@ class Player(threading.Thread):
                         break
                 else:
                     self.sock.send(bytearray())
+
+        self.remove()
 
 
 class Lobby:

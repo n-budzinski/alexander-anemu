@@ -1,5 +1,5 @@
 <DBTBL>
-#exec(LW_time&10000&l_games_btn.cml\00)
+#exec(LW_time&30000&l_games_btn.cml\00)
 #block(l_games_btn.cml,l_g):GW|open&dbtbl.dcml\00&order=r.hbtime^resort=\00|LW_lockall
 #end(l_g)
   #ebox[%BB](x:0,y:0,w:100%,h:100%)
