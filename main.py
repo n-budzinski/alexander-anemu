@@ -137,7 +137,7 @@ def terminate_incorrect_lobbies():
     for lobby in lobbies:
         if not lobbies[lobby].host.session_id in connections:
             logging.warning("A lobby is missing its host. Removing...")
-            lobby.remove()
+            lobbies[lobby].remove()
 
 # TODO Research the behavior when multiple commands are present
 
