@@ -52,7 +52,7 @@ def new_game_create(host: main.Player, options):
                 game_password = ""
         elif option.startswith("title="):
             game_title = option[6:]
-            if game_title < 3 or not game_title.isalnum():
+            if len(game_title) < 3:
                 return data_from_file("new_game_dlg.dcml")
     
     #Handling missing arguments - Probably unnecessary.
