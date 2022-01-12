@@ -194,7 +194,6 @@ def packet_pack(packet, request):
 
 def processrequest(raw_data, client: Player):
 
-    print(f"{client.ip_address}{functions}")
 
     response_parameters = []
 
@@ -210,9 +209,10 @@ def processrequest(raw_data, client: Player):
 
     #print(parameters)
     #print(reqfunction)
+    print(f"{client.ip_address}{data}")
 
     magic_bytes = parameters[len(parameters) - 2].decode(ENCODING)
-
+    
     if client.session_id == b'0':
         client.session_id = int(parameters[len(parameters)-1])
 
