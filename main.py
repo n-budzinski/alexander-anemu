@@ -26,7 +26,6 @@ UDP_PORT = 34000
 GGWDSERVER_LANG = 0
 GGWDSERVER_VERS = 16
 
-GAME_TYPES = {"0": "Normal"}
 
 class Player(threading.Thread):
 

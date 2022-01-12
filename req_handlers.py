@@ -1,8 +1,16 @@
 import ipaddress
 from datetime import datetime
-from main import IRC_CHAT_ADDRESS, GAME_TYPES
-from main import Player, Lobby, lobbies
-from main import leave_lobby_process, terminate_incorrect_lobbies
+# from main import IRC_CHAT_ADDRESS
+# from main import Player, Lobby, lobbies
+# from main import leave_lobby_process, terminate_incorrect_lobbies
+import main
+
+
+GAME_TYPES = {
+                "0": "Normal",
+                #"1": "Event",
+            }
+
 
 def data_from_file(filename: str):
     return open(f'res/{filename}', 'rb').read().decode('utf-8')
@@ -20,7 +28,7 @@ def reverseip(address: str):
     return str(int(ipaddress.IPv4Address(address)))
     
 
-def new_game_create(host: Player, options):
+def new_game_create(host: main.Player, options):
 
     max_players = None
     game_type = None
@@ -31,8 +39,12 @@ def new_game_create(host: Player, options):
         option = option.strip("'")
         if option.startswith("max_players="):
             max_players = int(option[12:])+2
+            if max_players > 7:
+                max_players = 7
         elif option.startswith("type="):
             game_type = option[5:]
+            if game_type not in GAME_TYPES:
+                game_type = GAME_TYPES[0]
         elif option.startswith("password="):
             if len(option[9:]) > 1:
                 game_password = option[9:]
@@ -40,15 +52,17 @@ def new_game_create(host: Player, options):
                 game_password = ""
         elif option.startswith("title="):
             game_title = option[6:]
+            if game_title < 3 or not game_title.isalnum():
+                return data_from_file("new_game_dlg.dcml")
     
     #Handling missing arguments - Probably unnecessary.
     if None in [max_players,game_type,game_password,game_title]:
         return data_from_file("cancel.dcml")
 
-    new_lobby_id = len(lobbies)+1
+    new_lobby_id = len(main.lobbies)+1
     host.hosting_lid = new_lobby_id
     host.lobby_id = new_lobby_id
-    lobbies[new_lobby_id] = Lobby(host=host,
+    main.lobbies[new_lobby_id] = main.Lobby(host=host,
                                   max_players=max_players,
                                   password=game_password,
                                   game_title=game_title,
@@ -88,7 +102,7 @@ def join_game(client, options):
             newlobbystring = newlobbystring.replace("LOBBY_ID", lobby_id)
             return newlobbystring
         else:
-            leave_lobby_process(client)
+            main.leave_lobby_process(client)
             if lobby.password is not None:
                 if password is None:
                     newlobbystring = data_from_file("password_prompt.dcml")
@@ -98,7 +112,7 @@ def join_game(client, options):
                         newlobbystring = data_from_file("incorrect_password.dcml")
                         return newlobbystring
             client.lobby_id = lobby_id
-            requested_lobby = lobbies[int(lobby_id)]
+            requested_lobby = main.lobbies[int(lobby_id)]
             newlobbystring = data_from_file("join_game.dcml")
             newlobbystring = newlobbystring.replace("LOBBYID", lobby_id)
             newlobbystring = newlobbystring.replace("MAXPLAYERS", str(requested_lobby.max_players))
@@ -115,7 +129,7 @@ def join_game(client, options):
 
 def get_dbtbl(options: list):
     """Handles dbtbl (available lobby table) calls."""
-    terminate_incorrect_lobbies()
+    main.terminate_incorrect_lobbies()
     order = None
     resort = None
     for option in options:
@@ -133,7 +147,7 @@ def get_dbtbl(options: list):
     pingstring = ""
     newlobbystring = data_from_file("dbtbl.dcml")
     newlobbystring = newlobbystring.replace("//LASTUPDATE", lastupdate)
-    for (lid, lobj) in lobbies.items():
+    for (lid, lobj) in main.lobbies.items():
         buttonstringtemp = "#apan[%APANLOBBYN](%SB[x:0,y:ENTRYPOS-2,w:100%,h:20]," \
                            "{GW|open&join_game.dcml\\00&delete_old=true^id_room=LOBBYID\\00|LW_lockall},8) " \
                       "#font(BC12,BC12,BC12)" \
@@ -157,7 +171,8 @@ def get_dbtbl(options: list):
     return newlobbystring
 
 
-def new_game_dlg(client: Player, options: list):
+def new_game_dlg(client: main.Player, options: list):
+    main.leave_lobby_process(client)
     delete_old = None
     for option in options:
         option = option.strip("'")
@@ -165,9 +180,12 @@ def new_game_dlg(client: Player, options: list):
             delete_old = option[11:]
     #if delete_old == 'true':
         #leave_lobby_process(client)
-    leave_lobby_process(client)
     response_data = data_from_file("new_game_dlg.dcml")
     response_data = response_data.replace("NICKNAME", client.player_name)
+    types = []
+    for type in GAME_TYPES:
+        types.append(f"{GAME_TYPES[type]},")
+    response_data = response_data.replace("//TYPES", "".join(types))
     return response_data
 
 def voting(options: list):
@@ -194,5 +212,5 @@ def log_user(client, options):
         response_data = data_from_file("log_user.dcml")
         response_data = response_data.replace("NICKNAME", client.player_name)
         response_data = response_data.replace("PLAYERID", str(client.session_id))
-        response_data = response_data.replace("CHAT_ADDRESS", IRC_CHAT_ADDRESS)
+        response_data = response_data.replace("CHAT_ADDRESS", main.IRC_CHAT_ADDRESS)
         return response_data

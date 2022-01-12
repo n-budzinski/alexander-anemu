@@ -26,5 +26,6 @@
 
 #font(BC14,RC14,RC14)
 #txt[%L_MAXPL](%L[x:11,y:175,w:151,h:24],{},"Type:")
-#cbb[%E_TYPE](%L[x:130,y:169,w:273,h:24],{%GV_VE_TYPE},Normal,0)
+#cbb[%E_TYPE](%L[x:130,y:169,w:273,h:24],{%GV_VE_TYPE},//TYPES0)
+#//TYPES
 <NGDLG>
