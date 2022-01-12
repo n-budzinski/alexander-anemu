@@ -3,37 +3,30 @@ import threading
 import struct
 import zlib
 import logging
-from req_handlers import *
+from req_handlers import * 
 
 sessions = {}
 connections = []  # Player objects
 lobbies = {}  # lobby_id : Lobby
 
+total_connections = 0
+connection_count = 0
+lobby_count = 0
+
+ENDIANNESS = "little"
+ENCODING = "utf-8"
 
 HOST = '0.0.0.0'
 IRC_CHAT_ADDRESS = "alexander-chat.hardko.de"
 
 TCP_PORT = 34001
 TCP_TIMEOUT = 120
-
 UDP_PORT = 34000
-
 
 GGWDSERVER_LANG = 0
 GGWDSERVER_VERS = 16
 
-
-ENDIANNESS = "little"
-ENCODING = "utf-8"
-
-
 GAME_TYPES = {"0": "Normal"}
-
-
-total_connections = 0
-connection_count = 0
-lobby_count = 0
-
 
 class Player(threading.Thread):
 
@@ -98,7 +91,6 @@ class Player(threading.Thread):
 
                         response = processrequest(data, self)
 
-
                         # Breaking down large packets - Default value used by the original master server = 1440
                         fragment_offset = 0
                         for fragment_i in range(0, math.ceil(len(response)/1440)):
@@ -106,11 +98,11 @@ class Player(threading.Thread):
                             fragment_offset = (fragment_i + 1) * 1440
                             self.sock.send(fragment)
 
-                    except:
-                        logging.critical(f"{str(self.ip_address)} returned unexpected data \n",
-                                         f"- - - - - - - - - - - - - - - - - - - - - - - - - -",
+                    except Exception as exception:
+                        logging.critical(f"{str(self.ip_address)} caused an unexpected error. \n",
+                                         f"- - - - - - - - - - - - - - - - - - - - - - - - - -\n",
                                          f"{data}",
-                                         f"- - - - - - - - - - - - - - - - - - - - - - - - - -")
+                                         f"- - - - - - - - - - - - - - - - - - - - - - - - - -\n")
                         self.remove()
                         break
                 else:
@@ -168,7 +160,7 @@ def data_deconstruct(inputdata):
             functions[function_n][1].append(value)
             cursor += parameter_length
         inputdata = inputdata[cursor:]
-    print(functions)
+    print(f"{functions}")
     return functions
 
 
@@ -224,37 +216,46 @@ def processrequest(raw_data, client: Player):
     if client.session_id == b'0':
         client.session_id = int(parameters[len(parameters)-1])
 
+    #Sent when creating a lobby
     if reqfunction == "setipaddr":
         return bytearray()
 
+    #Sent when leaving a lobby
     elif reqfunction == "leave":
         leave_lobby_process(client)
         return bytearray()
 
+    #Sent when starting a game (?)
     elif reqfunction == "start":
         return bytearray()
 
+    #Requested when opening an URL
     elif reqfunction == "url":
         retaction = "LW_time"
         returl = "open:" + parameters[0].decode('utf8')
         responsedata = data_construct([[retaction, "0", returl]], parameters[len(parameters) - 2].decode('utf8'))
         return packet_pack(responsedata, raw_data)
 
+    #Sent periodically during the game (?)
     elif reqfunction == "gmalive":
         return bytearray()
 
+    #Sent periodically during the game (?)
     elif reqfunction == "stats":
         return bytearray()
 
+    #Sent after a finished game
     elif reqfunction == "endgame":
         leave_lobby_process(client)
         return bytearray()
-
+    
+    #Sent periodically as a lobby keep-alive
     elif reqfunction == "alive":
         if client.lobby_id in lobbies:
             lobbies[client.lobby_id].players = int.from_bytes(parameters[0][0:1], 'little')
         return bytearray()
 
+    #Sent while logging in
     elif reqfunction == "login":
         leave_lobby_process(client)
         payload = "demologin.dcml"
@@ -317,7 +318,7 @@ def processrequest(raw_data, client: Player):
             return packet_pack(data_construct(response_parameters, magic_bytes), raw_data)
 
         else:
-            pass
+            response_data = data_from_file("cancel.dcml")
 
     else:
         pass
