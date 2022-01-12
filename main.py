@@ -159,6 +159,7 @@ def data_deconstruct(inputdata):
             functions[function_n][1].append(value)
             cursor += parameter_length
         inputdata = inputdata[cursor:]
+    print(f"{functions}")
     return functions
 
 
@@ -193,8 +194,6 @@ def packet_pack(packet, request):
     return finalizedpacket
 
 def processrequest(raw_data, client: Player):
-
-    print(f"{client.ip_address}{functions}")
 
     response_parameters = []
 
